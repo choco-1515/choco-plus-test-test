@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Choco-Tube-Plus{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 80px;">
+    <h1 style="font-size: 4rem; color: #c76816; margin-bottom: 20px;">Choco-Tube-Plus</h1>
+    <p style="color: #aaa; margin-bottom: 40px; font-size: 1.1rem;">広告なしでYouTubeを楽しみましょう</p>
+    
+    <div style="max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 40px; border-radius: 24px; border: 1px solid #333;">
+        <form action="/search" method="get" id="main-search-form">
+            <div class="search-form" style="margin-bottom: 30px; position: relative;">
+                <input type="text" id="main-search-input" name="q" placeholder="動画を検索">
+                <button type="submit">検索</button>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <p style="margin: 0 0 12px 0; font-size: 1rem; color: #fff; font-weight: 600;">検索種類:</p>
+                <div style="display: flex; gap: 20px; font-size: 1rem; color: #aaa;">
+                    <label style="cursor: pointer;"><input type="radio" name="search_type" value="video" checked> 動画検索</label>
+                    <label style="cursor: pointer;"><input type="radio" name="search_type" value="channel"> チャンネル検索</label>
+                </div>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <p style="margin: 0 0 12px 0; font-size: 1rem; color: #fff; font-weight: 600;">検索モード:</p>
+                <div style="display: flex; gap: 20px; font-size: 1rem; color: #aaa;">
+                    <label style="cursor: pointer;"><input type="radio" name="search_mode" value="inv_first" checked> Invidious優先</label>
+                    <label style="cursor: pointer;"><input type="radio" name="search_mode" value="yt_first"> YouTube API優先</label>
+                </div>
+            </div>
+
+            <div style="text-align: left;">
+                <p style="margin: 0 0 12px 0; font-size: 1rem; color: #fff; font-weight: 600;">サムネイルプロキシ:</p>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 1rem; color: #aaa;">
+                    <label style="cursor: pointer;"><input type="radio" name="proxy_type" value="wsrv.nl" checked> wsrv.nl</label>
+                    <label style="cursor: pointer;"><input type="radio" name="proxy_type" value="self-hosted"> 自サーバー</label>
+                    <label style="cursor: pointer;"><input type="radio" name="proxy_type" value="img.youtube.com"> img.youtube.com</label>
+                    <label style="cursor: pointer;"><input type="radio" name="proxy_type" value="i.ytimg.com"> i.ytimg.com</label>
+                </div>
+            </div>
+        </form>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const proxyCookie = document.cookie.split('; ').find(row => row.startsWith('proxy_type='));
+                const modeCookie = document.cookie.split('; ').find(row => row.startsWith('search_mode='));
+                const searchTypeCookie = document.cookie.split('; ').find(row => row.startsWith('search_type='));
+                
+                if (proxyCookie) {
+                    const proxyValue = proxyCookie.split('=')[1];
+                    const proxyRadios = document.querySelectorAll('input[name="proxy_type"]');
+                    proxyRadios.forEach(radio => {
+                        if (radio.value === proxyValue) radio.checked = true;
+                    });
+                }
+                
+                if (modeCookie) {
+                    const modeValue = modeCookie.split('=')[1];
+                    const modeRadios = document.querySelectorAll('input[name="search_mode"]');
+                    modeRadios.forEach(radio => {
+                        if (radio.value === modeValue) radio.checked = true;
+                    });
+                }
+                
+                if (searchTypeCookie) {
+                    const searchTypeValue = searchTypeCookie.split('=')[1];
+                    const searchTypeRadios = document.querySelectorAll('input[name="search_type"]');
+                    searchTypeRadios.forEach(radio => {
+                        if (radio.value === searchTypeValue) radio.checked = true;
+                    });
+                }
+                
+                document.getElementById('main-search-form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const query = document.getElementById('main-search-input').value.trim();
+                    if (!query) {
+                        alert('検索内容を入力してください');
+                        return false;
+                    }
+                    const proxy = document.querySelector('input[name="proxy_type"]:checked').value;
+                    const mode = document.querySelector('input[name="search_mode"]:checked').value;
+                    const searchType = document.querySelector('input[name="search_type"]:checked').value;
+                    document.cookie = 'proxy_type=' + proxy + '; max-age=2592000; path=/';
+                    document.cookie = 'search_mode=' + mode + '; max-age=2592000; path=/';
+                    document.cookie = 'search_type=' + searchType + '; max-age=2592000; path=/';
+                    window.location.href = '/search?q=' + encodeURIComponent(query);
+                });
+            });
+        </script>
+    </div>
+</div>
+{% endblock %}
