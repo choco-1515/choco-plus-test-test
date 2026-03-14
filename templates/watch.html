@@ -631,18 +631,16 @@
 
     // ---- Invidiousレスポンスをストリームリストに変換 ----
     function parseInvidiousStreams(json) {
-        const streams = [];
+        const allStreams = [];
         if (json.hlsUrl) {
-            streams.push({ url: json.hlsUrl, quality: 'Auto (HLS)', format: 'hls', container: 'm3u8', hasAudio: true, hasVideo: true, isHLS: true, isLive: !!json.liveNow });
+            allStreams.push({ url: json.hlsUrl, quality: 'Auto (HLS)', format: 'hls', container: 'm3u8', hasAudio: true, hasVideo: true, isHLS: true, isLive: !!json.liveNow });
         }
         for (const fmt of (json.formatStreams || [])) {
             if (!fmt.url) continue;
-            if (fmt.url.includes('pot=')) continue;
-            streams.push({ url: fmt.url, quality: fmt.qualityLabel || fmt.quality || 'Unknown', format: 'mp4', container: fmt.container || 'mp4', hasAudio: true, hasVideo: true, isHLS: false, isLive: false });
+            allStreams.push({ url: fmt.url, quality: fmt.qualityLabel || fmt.quality || 'Unknown', format: 'mp4', container: fmt.container || 'mp4', hasAudio: true, hasVideo: true, isHLS: false, isLive: false });
         }
         for (const fmt of (json.adaptiveFormats || [])) {
             if (!fmt.url) continue;
-            if (fmt.url.includes('pot=')) continue;
             const codecRaw = fmt.codec || fmt.encoding || fmt.type || '';
             const mimeType = (fmt.type || '').toLowerCase();
             const codec = codecRaw.toLowerCase();
@@ -653,15 +651,17 @@
             const isAudioMime = mimeType.startsWith('audio/');
             if (isVideoMime || ['vp9','vp8','av1','vp09','h264','h265','avc1'].some(v => codec.includes(v))) {
                 const codecLabel = ['vp9','vp8','av1','vp09'].some(v => codec.includes(v)) ? 'WebM' : 'H.264';
-                streams.push({ url: fmt.url, quality: `${(quality.split(' ')[0])||'unknown'} (${codecLabel})`, format: 'video', container, hasAudio: false, hasVideo: true, isHLS: false, isLive: false });
+                allStreams.push({ url: fmt.url, quality: `${(quality.split(' ')[0])||'unknown'} (${codecLabel})`, format: 'video', container, hasAudio: false, hasVideo: true, isHLS: false, isLive: false });
             } else if (isAudioMime || ['opus','aac','mp4a','vorbis','mp3'].some(a => codec.includes(a))) {
                 const brRaw = parseInt(String(bitrate).split('.')[0]) || 0;
                 const br = brRaw > 1000 ? Math.round(brRaw / 1000) : brRaw;
                 let label = codec.includes('opus') ? `${br} kbps (WebM)` : codec.includes('aac') || codec.includes('mp4a') ? `${br} kbps (M4A)` : codec.includes('vorbis') ? `${br} kbps (Vorbis)` : `${br} kbps (${(fmt.encoding||'Audio').toUpperCase()})`;
-                streams.push({ url: fmt.url, quality: label, format: 'audio', container, hasAudio: true, hasVideo: false, isHLS: false, isLive: false });
+                allStreams.push({ url: fmt.url, quality: label, format: 'audio', container, hasAudio: true, hasVideo: false, isHLS: false, isLive: false });
             }
         }
-        return streams;
+        // pot= なしを優先。pot= なしが一つもなければ全部そのまま使う
+        const noPotStreams = allStreams.filter(s => !s.url.includes('pot='));
+        return noPotStreams.length > 0 ? noPotStreams : allStreams;
     }
 
     // ---- バッチ並行リクエスト（Wista方式）----
