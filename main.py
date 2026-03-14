@@ -621,11 +621,6 @@ def invidious_stream(video_id):
                         'isLive': False,
                     })
 
-            # pot= なしを優先。全部 pot= なら全部そのまま使う
-            no_pot = [s for s in streams if 'pot=' not in s.get('url', '')]
-            if no_pot:
-                streams = no_pot
-
             if streams:
                 return {
                     'streams': streams,
