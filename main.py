@@ -548,8 +548,6 @@ def invidious_stream(video_id):
                 url = fmt.get('url', '')
                 if not url:
                     continue
-                if 'pot=' in url:
-                    continue
                 quality = fmt.get('qualityLabel') or fmt.get('quality') or 'Unknown'
                 container = fmt.get('container', 'mp4')
                 streams.append({
@@ -566,8 +564,6 @@ def invidious_stream(video_id):
             for fmt in data.get('adaptiveFormats', []):
                 url = fmt.get('url', '')
                 if not url:
-                    continue
-                if 'pot=' in url:
                     continue
                 # codec フィールドが空の場合、type (MIMEタイプ) と encoding から判定する
                 codec = fmt.get('codec', '') or fmt.get('encoding', '')
@@ -624,6 +620,11 @@ def invidious_stream(video_id):
                         'isHLS': False,
                         'isLive': False,
                     })
+
+            # pot= なしを優先。全部 pot= なら全部そのまま使う
+            no_pot = [s for s in streams if 'pot=' not in s.get('url', '')]
+            if no_pot:
+                streams = no_pot
 
             if streams:
                 return {
