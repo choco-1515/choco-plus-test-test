@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Choco-Tube-Plus{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">Choco<span>-Tube-Plus</span></a>
+        <div class="search-container">
+            <form action="/search" method="get" class="search-form" id="header-search-form">
+                <input type="text" id="search-input" name="q" placeholder="検索" value="{{ query if query is defined and query else '' }}" required>
+                <button type="submit">検索</button>
+            </form>
+        </div>
+        <div style="width: 40px;"></div>
+    </header>
+    
+    <script>
+        document.getElementById('header-search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) {
+                return false;
+            }
+            window.location.href = '/search?q=' + encodeURIComponent(query);
+        });
+    </script>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <div class="bottom-nav">
+        <a href="/" class="{{ 'active' if request.path == '/' }}">🏠<span>ホーム</span></a>
+        <a href="/trend" class="{{ 'active' if request.path == '/trend' }}">🔥<span>トレンド</span></a>
+    </div>
+
+    <script>
+        // Restore preferences from cookies and update form/UI elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const proxyCookie = document.cookie.split('; ').find(row => row.startsWith('proxy_type='));
+            const modeCookie = document.cookie.split('; ').find(row => row.startsWith('search_mode='));
+            
+            if (proxyCookie) {
+                const proxyValue = proxyCookie.split('=')[1];
+                const proxySelects = document.querySelectorAll('select[onchange*="proxy"]');
+                proxySelects.forEach(select => {
+                    const option = select.querySelector(`option[value="${proxyValue}"]`);
+                    if (option) select.value = proxyValue;
+                });
+                const proxyRadios = document.querySelectorAll('input[name="proxy"]');
+                proxyRadios.forEach(radio => {
+                    if (radio.value === proxyValue) radio.checked = true;
+                });
+            }
+            
+            if (modeCookie) {
+                const modeValue = modeCookie.split('=')[1];
+                const modeRadios = document.querySelectorAll('input[name="mode"]');
+                modeRadios.forEach(radio => {
+                    if (radio.value === modeValue) radio.checked = true;
+                });
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
