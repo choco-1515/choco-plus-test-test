@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}{{ query }} - Choco-Tube-Plus{% endblock %}
+
+{% block extra_head %}
+<style>
+    .search-options {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .proxy-selector {
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+    .proxy-selector select {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #444;
+        padding: 5px;
+        border-radius: 5px;
+    }
+    .type-selector {
+        display: flex;
+        gap: 10px;
+    }
+    .type-selector a {
+        padding: 6px 16px;
+        background: #2a2a2a;
+        color: #aaa;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+    .type-selector a.active {
+        background: #444;
+        color: #fff;
+        border-color: #fa9d5a;
+    }
+    .type-selector a:hover {
+        background: #333;
+    }
+    .date-format-selector {
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+    .date-format-selector select {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #444;
+        padding: 5px;
+        border-radius: 5px;
+        margin-left: 5px;
+    }
+    .date-format-selector select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .channel-card {
+        padding: 20px;
+        background: #2a2a2a;
+        border-radius: 12px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.2s;
+    }
+    .channel-card:hover {
+        background: #383838;
+    }
+    .channel-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #444;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    .channel-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .channel-card-info {
+        flex: 1;
+    }
+    .channel-card-info h3 {
+        margin: 0 0 8px 0;
+        font-size: 1rem;
+        color: #fff;
+    }
+    .channel-card-info p {
+        margin: 0;
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+    .warning-message {
+        background: #3a2a2a;
+        border: 1px solid #aa5533;
+        color: #ffb366;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        display: none;
+    }
+    .warning-message.show {
+        display: block;
+    }
+</style>
+<script>
+    function handleDateFormatChange(value) {
+        var searchSource = '{{ search_source }}';
+        var warningMsg = document.getElementById('invidious-warning');
+        
+        if (searchSource === 'invidious' && value === 'date') {
+            // Show warning and revert to ~ago
+            if (warningMsg) {
+                warningMsg.classList.add('show');
+            }
+            // Reset the select to ~ago
+            document.getElementById('date-format-select').value = 'ago';
+            return false;
+        }
+        
+        // Normal behavior - save the selection
+        document.cookie = 'date_format=' + value + '; max-age=2592000; path=/';
+        location.href = '/search?q={{ query }}';
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="invidious-warning" class="warning-message">
+    invidious優先検索では日付表示をYYYY-MM-DDのようにすることはできません。
+</div>
+<div class="search-options">
+    <div class="type-selector">
+        <a onclick="document.cookie='search_type=video; max-age=2592000; path=/'; location.href='/search?q={{ query }}'" class="{% if search_type != 'channel' %}active{% endif %}">動画検索</a>
+        <a onclick="document.cookie='search_type=channel; max-age=2592000; path=/'; location.href='/search?q={{ query }}'" class="{% if search_type == 'channel' %}active{% endif %}">チャンネル検索</a>
+    </div>
+    <div style="display: flex; gap: 20px;">
+        <div class="date-format-selector">
+            日付:
+            <select id="date-format-select" onchange="handleDateFormatChange(this.value)">
+                <option value="ago" {{ 'selected' if date_format == 'ago' or not date_format }}>~ago</option>
+                <option value="date" {{ 'selected' if date_format == 'date' }} {% if search_source == 'invidious' %}disabled{% endif %}>YYYY-MM-DD</option>
+            </select>
+        </div>
+        <div class="proxy-selector">
+            サムネイル:
+            <select id="proxy-select" onchange="document.cookie='proxy_type=' + this.value + '; max-age=2592000; path=/'; location.href='/search?q={{ query }}'">
+                <option value="wsrv.nl" {{ 'selected' if proxy_type == 'wsrv.nl' or not proxy_type }}>wsrv.nl</option>
+                <option value="self-hosted" {{ 'selected' if proxy_type == 'self-hosted' }}>自サーバー</option>
+                <option value="img.youtube.com" {{ 'selected' if proxy_type == 'img.youtube.com' }}>img.youtube.com</option>
+                <option value="i.ytimg.com" {{ 'selected' if proxy_type == 'i.ytimg.com' }}>i.ytimg.com</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+{% if search_type == 'channel' %}
+<div style="display: flex; flex-direction: column; gap: 15px;">
+    {% for result in results %}
+    <a href="/channel/{{ result.id }}" class="channel-card">
+        {% if result.thumbnail %}
+        <div class="channel-avatar">
+            <img src="{{ result.thumbnail }}" alt="{{ result.title }}">
+        </div>
+        {% endif %}
+        <div class="channel-card-info">
+            <h3>{{ result.title }}</h3>
+            {% if result.description %}
+            <p>{{ result.description[:150] }}{% if result.description|length > 150 %}...{% endif %}</p>
+            {% else %}
+            <p>チャンネル</p>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="video-grid">
+    {% for result in results %}
+    <a href="/watch/{{ result.id }}" class="video-card">
+        <div class="thumbnail-container">
+            <img src="{{ result.thumbnail }}" alt="{{ result.title }}" loading="lazy">
+            {% if result.duration %}
+            <span class="video-duration">{{ result.duration }}</span>
+            {% endif %}
+        </div>
+        <div class="video-info">
+            <h3>{{ result.title }}</h3>
+            <p>{{ result.channel }}</p>
+            <div class="video-meta">
+                {% if result.views %}
+                <span class="view-count">視聴数: {{ result.views }}</span>
+                {% endif %}
+                {% if result.published_at %}
+                <span class="published-date">{% if search_source == 'invidious' %}{{ result.published_at }}{% else %}{{ result.published_at|format_date(date_format) }}{% endif %}</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if next_page %}
+<div class="pagination">
+    {% if mode == 'inv_first' %}
+    <a href="/search?q={{ query }}&mode={{ mode }}&page={{ next_page }}" class="next-btn">次のページへ</a>
+    {% else %}
+    <a href="/search?q={{ query }}&mode={{ mode }}&token={{ next_page }}" class="next-btn">次のページへ</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
