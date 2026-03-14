@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}トレンド - Choco-Tube-Plus{% endblock %}
+
+{% block extra_head %}
+<style>
+    .trend-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .region-selector {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .region-selector a {
+        color: #aaa;
+        text-decoration: none;
+        padding: 5px 15px;
+        border: 1px solid #333;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    .region-selector a.active {
+        background: #fa9d5a;
+        color: #000;
+        border-color: #fa9d5a;
+    }
+    .jp-category-selector {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    .jp-category-selector a {
+        color: #aaa;
+        text-decoration: none;
+        padding: 5px 15px;
+        border: 1px solid #333;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        background: transparent;
+        cursor: pointer;
+    }
+    .jp-category-selector a.active {
+        background: #fa9d5a;
+        color: #000;
+        border-color: #fa9d5a;
+    }
+    .proxy-selector {
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+    .proxy-selector select {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #444;
+        padding: 5px;
+        border-radius: 5px;
+    }
+    .date-format-selector {
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+    .date-format-selector select {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #444;
+        padding: 5px;
+        border-radius: 5px;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trend-header">
+    <div class="region-selector">
+        <a onclick="setTrendCookie('region', 'JP'); location.href='/trend'" class="{{ 'active' if region == 'JP' }}">日本</a>
+        <a onclick="setTrendCookie('region', 'US'); location.href='/trend'" class="{{ 'active' if region == 'US' }}">アメリカ</a>
+        <a onclick="setTrendCookie('region', 'GB'); location.href='/trend'" class="{{ 'active' if region == 'GB' }}">イギリス</a>
+        <a onclick="setTrendCookie('region', 'KR'); location.href='/trend'" class="{{ 'active' if region == 'KR' }}">韓国</a>
+        <a onclick="setTrendCookie('region', 'DE'); location.href='/trend'" class="{{ 'active' if region == 'DE' }}">ドイツ</a>
+        <a onclick="setTrendCookie('region', 'FR'); location.href='/trend'" class="{{ 'active' if region == 'FR' }}">フランス</a>
+    </div>
+    
+    <div style="display: flex; gap: 20px;">
+        {% if region == 'JP' %}
+        <div class="date-format-selector">
+            日付:
+            <select onchange="document.cookie = 'date_format=' + this.value + '; max-age=2592000; path=/'; location.href='/trend'">
+                <option value="ago" {{ 'selected' if date_format == 'ago' or not date_format }}>~ago</option>
+                <option value="date" {{ 'selected' if date_format == 'date' }}>YYYY-MM-DD</option>
+            </select>
+        </div>
+        {% endif %}
+        <div class="proxy-selector">
+            サムネイル:
+            <select onchange="document.cookie = 'proxy_type=' + this.value + '; max-age=2592000; path=/'; location.href='/trend'">
+                <option value="img.youtube.com" {{ 'selected' if proxy_type == 'img.youtube.com' }}>img.youtube.com</option>
+                <option value="i.ytimg.com" {{ 'selected' if proxy_type == 'i.ytimg.com' }}>i.ytimg.com</option>
+                <option value="self-hosted" {{ 'selected' if proxy_type == 'self-hosted' }}>自サーバー</option>
+                <option value="wsrv.nl" {{ 'selected' if proxy_type == 'wsrv.nl' }}>wsrv.nl</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+function setTrendCookie(name, value) {
+    document.cookie = 'trend_' + name + '=' + value + '; max-age=2592000; path=/';
+}
+</script>
+
+{% if region == 'JP' %}
+<div class="jp-category-selector">
+    <strong style="color: #fff; display: flex; align-items: center; margin-right: 10px;">カテゴリ:</strong>
+    <a onclick="setTrendCookie('category', 'all'); location.href='/trend'" class="{{ 'active' if jp_category == 'all' or not jp_category }}">全て</a>
+    <a onclick="setTrendCookie('category', 'game'); location.href='/trend'" class="{{ 'active' if jp_category == 'game' }}">ゲーム</a>
+    <a onclick="setTrendCookie('category', 'music'); location.href='/trend'" class="{{ 'active' if jp_category == 'music' }}">音楽</a>
+</div>
+{% endif %}
+
+<div class="video-grid">
+    {% for video in results %}
+    <a href="/watch/{{ video.id }}" class="video-card">
+        <div class="thumbnail-container">
+            <img src="{{ video.thumbnail }}" alt="{{ video.title }}" loading="lazy">
+            {% if video.duration %}
+            <span class="video-duration">{{ video.duration }}</span>
+            {% endif %}
+        </div>
+        <div class="video-info">
+            <h3>{{ video.title }}</h3>
+            <p>{{ video.channel }}</p>
+            <div class="video-meta">
+                {% if video.views %}
+                <span class="view-count">視聴数: {{ video.views }}</span>
+                {% endif %}
+                {% if video.published_at %}
+                <span class="published-date">{{ video.published_at|format_date(date_format) }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}
