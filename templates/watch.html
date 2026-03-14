@@ -409,29 +409,25 @@
         </div>
 
         <!-- 動画タイトル・チャンネル・メタデータ -->
-        {% if video_title %}
         <div class="video-metadata">
-            <div class="video-title">{{ video_title }}</div>
-            {% if channel_name %}
+            <div class="video-title">{{ video_title if video_title else 'Video:' ~ video_id }}</div>
             <div class="channel-info">
                 {% if channel_icon %}
-                    <img src="{{ channel_icon }}" alt="{{ channel_name }}" class="channel-icon">
+                    <img src="{{ channel_icon }}" alt="{{ channel_name or 'Unknown' }}" class="channel-icon">
                 {% else %}
-                    <div class="channel-icon"></div>
+                    <div class="channel-icon" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:#888;">?</div>
                 {% endif %}
                 <div class="channel-details">
-                    <div class="channel-name">{{ channel_name }}</div>
+                    <div class="channel-name">{{ channel_name if channel_name else 'Unknown' }}</div>
                     {% if subscriber_count %}<div class="channel-subs">{{ subscriber_count }}</div>{% endif %}
                 </div>
             </div>
-            {% endif %}
             <!-- 動画メタデータ枠 -->
             <div class="video-desc-box">
                 <div class="video-desc-label">動画情報</div>
                 <div>準備中</div>
             </div>
         </div>
-        {% endif %}
 
         <!-- コメント欄 -->
         <div class="comments-section">
@@ -631,13 +627,13 @@
 
     // ---- Invidiousレスポンスをストリームリストに変換 ----
     function parseInvidiousStreams(json) {
-        const allStreams = [];
+        const streams = [];
         if (json.hlsUrl) {
-            allStreams.push({ url: json.hlsUrl, quality: 'Auto (HLS)', format: 'hls', container: 'm3u8', hasAudio: true, hasVideo: true, isHLS: true, isLive: !!json.liveNow });
+            streams.push({ url: json.hlsUrl, quality: 'Auto (HLS)', format: 'hls', container: 'm3u8', hasAudio: true, hasVideo: true, isHLS: true, isLive: !!json.liveNow });
         }
         for (const fmt of (json.formatStreams || [])) {
             if (!fmt.url) continue;
-            allStreams.push({ url: fmt.url, quality: fmt.qualityLabel || fmt.quality || 'Unknown', format: 'mp4', container: fmt.container || 'mp4', hasAudio: true, hasVideo: true, isHLS: false, isLive: false });
+            streams.push({ url: fmt.url, quality: fmt.qualityLabel || fmt.quality || 'Unknown', format: 'mp4', container: fmt.container || 'mp4', hasAudio: true, hasVideo: true, isHLS: false, isLive: false });
         }
         for (const fmt of (json.adaptiveFormats || [])) {
             if (!fmt.url) continue;
@@ -651,17 +647,15 @@
             const isAudioMime = mimeType.startsWith('audio/');
             if (isVideoMime || ['vp9','vp8','av1','vp09','h264','h265','avc1'].some(v => codec.includes(v))) {
                 const codecLabel = ['vp9','vp8','av1','vp09'].some(v => codec.includes(v)) ? 'WebM' : 'H.264';
-                allStreams.push({ url: fmt.url, quality: `${(quality.split(' ')[0])||'unknown'} (${codecLabel})`, format: 'video', container, hasAudio: false, hasVideo: true, isHLS: false, isLive: false });
+                streams.push({ url: fmt.url, quality: `${(quality.split(' ')[0])||'unknown'} (${codecLabel})`, format: 'video', container, hasAudio: false, hasVideo: true, isHLS: false, isLive: false });
             } else if (isAudioMime || ['opus','aac','mp4a','vorbis','mp3'].some(a => codec.includes(a))) {
                 const brRaw = parseInt(String(bitrate).split('.')[0]) || 0;
                 const br = brRaw > 1000 ? Math.round(brRaw / 1000) : brRaw;
                 let label = codec.includes('opus') ? `${br} kbps (WebM)` : codec.includes('aac') || codec.includes('mp4a') ? `${br} kbps (M4A)` : codec.includes('vorbis') ? `${br} kbps (Vorbis)` : `${br} kbps (${(fmt.encoding||'Audio').toUpperCase()})`;
-                allStreams.push({ url: fmt.url, quality: label, format: 'audio', container, hasAudio: true, hasVideo: false, isHLS: false, isLive: false });
+                streams.push({ url: fmt.url, quality: label, format: 'audio', container, hasAudio: true, hasVideo: false, isHLS: false, isLive: false });
             }
         }
-        // pot= なしを優先。pot= なしが一つもなければ全部そのまま使う
-        const noPotStreams = allStreams.filter(s => !s.url.includes('pot='));
-        return noPotStreams.length > 0 ? noPotStreams : allStreams;
+        return streams;
     }
 
     // ---- バッチ並行リクエスト（Wista方式）----
@@ -1097,12 +1091,6 @@
         if (val) sessionStorage.setItem(_checkKey(label), '1');
         else sessionStorage.removeItem(_checkKey(label));
     }
-    // pot= なし → デフォルト✅、pot= あり → デフォルト□（ユーザーが切り替えた場合はその状態を優先）
-    function _getEffectiveCheck(stream) {
-        const stored = sessionStorage.getItem(_checkKey(stream.quality));
-        if (stored !== null) return stored === '1';
-        return !stream.url.includes('pot=');
-    }
 
     // ---- 画質オプション描画 ----
     function renderQualityOptions() {
@@ -1143,11 +1131,11 @@
 
             const chk = document.createElement('span');
             chk.className = 'quality-check';
-            chk.textContent = _getEffectiveCheck(stream) ? '✅' : '□';
+            chk.textContent = _getCheck(stream.quality) ? '✅' : '□';
             chk.title = 'メモ用チェック';
             chk.onclick = (e) => {
                 e.stopPropagation();
-                const next = !_getEffectiveCheck(stream);
+                const next = !_getCheck(stream.quality);
                 _setCheck(stream.quality, next);
                 chk.textContent = next ? '✅' : '□';
             };
