@@ -1,142 +1,74 @@
-```html
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>乙!カオスMAX</title>
+<div id="otsuChaos">
+  <div class="otsuLayer">
+乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!
+乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!
+乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!
+乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!
+乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!乙!
+  </div>
+</div>
 
 <style>
-html, body{
-margin:0;
-padding:0;
-width:100%;
-height:100%;
-overflow:hidden;
-background:black;
+#otsuChaos{
+  position:fixed;
+  inset:0;
+  background:black;
+  z-index:2147483647;
+  overflow:hidden;
 }
 
-#screen{
-position:fixed;
-inset:0;
-background:black;
-z-index:2147483647;
-pointer-events:none;
+.otsuLayer{
+  position:absolute;
+  width:200vw;
+  height:200vh;
+
+  font-size:7vw;
+  font-weight:900;
+  font-family:sans-serif;
+  line-height:1.1;
+  word-break:break-all;
+
+  animation:
+  otsuMove 10s linear infinite,
+  otsuRotate 6s linear infinite,
+  otsuColor 0.6s infinite;
 }
 
-.otsu{
-position:absolute;
-font-family:sans-serif;
-font-weight:900;
-font-size:50vmin;
-transform:scale(8);
-animation:rainbow 0.5s infinite;
-pointer-events:auto;
+@keyframes otsuMove{
+  0%{ transform:translate(-50vw,-50vh); }
+  50%{ transform:translate(0vw,0vh); }
+  100%{ transform:translate(-50vw,-50vh); }
 }
 
-@keyframes rainbow{
-0%{color:red;}
-20%{color:orange;}
-40%{color:yellow;}
-60%{color:lime;}
-80%{color:cyan;}
-100%{color:magenta;}
+@keyframes otsuRotate{
+  0%{ rotate:0deg }
+  100%{ rotate:360deg }
+}
+
+@keyframes otsuColor{
+  0%{ color:red }
+  20%{ color:orange }
+  40%{ color:yellow }
+  60%{ color:lime }
+  80%{ color:cyan }
+  100%{ color:magenta }
 }
 </style>
 
-</head>
-<body>
-
-<div id="screen"></div>
-
 <script>
+const chaos = document.getElementById("otsuChaos")
 
-// 他のbody要素削除
-Array.from(document.body.children).forEach(el=>{
-if(el.id!=="screen")el.remove();
-});
-
-// 設定
-const screen=document.getElementById("screen");
-const otsuList=[];
-const MAX_OTSU=40;
-
-// 乙!生成
-function createOtsu(){
-
-if(otsuList.length>MAX_OTSU)return;
-
-const el=document.createElement("div");
-el.className="otsu";
-el.textContent="乙!";
-
-screen.appendChild(el);
-
-const obj={
-el,
-x:Math.random()*window.innerWidth,
-y:Math.random()*window.innerHeight,
-vx:(Math.random()*6+2)*(Math.random()<0.5?-1:1),
-vy:(Math.random()*6+2)*(Math.random()<0.5?-1:1)
-};
-
-otsuList.push(obj);
+function block(e){
+  e.preventDefault()
+  e.stopPropagation()
+  return false
 }
 
-// 初期乙!
-for(let i=0;i<5;i++)createOtsu();
-
-// 増殖
-setInterval(()=>{
-createOtsu();
-},2000);
-
-// アニメーション
-function animate(){
-
-otsuList.forEach(o=>{
-
-o.x+=o.vx;
-o.y+=o.vy;
-
-if(o.x<0||o.x>window.innerWidth)o.vx*=-1;
-if(o.y<0||o.y>window.innerHeight)o.vy*=-1;
-
-o.el.style.left=o.x+"px";
-o.el.style.top=o.y+"px";
-
-o.el.style.transform=`scale(8) rotate(${Math.random()*2-1}deg)`;
-
-});
-
-requestAnimationFrame(animate);
-}
-
-animate();
-
-// フルスクリーン
-function goFullScreen(){
-const e=document.documentElement;
-if(e.requestFullscreen)e.requestFullscreen().catch(()=>{});
-}
-
-window.addEventListener("load",()=>setTimeout(goFullScreen,100));
-
-document.addEventListener("fullscreenchange",()=>{
-if(!document.fullscreenElement)goFullScreen();
-});
-
-document.addEventListener("visibilitychange",()=>{
-if(!document.hidden)goFullScreen();
-});
-
-// 操作封鎖
-document.addEventListener("keydown",e=>e.preventDefault());
-document.addEventListener("keyup",e=>e.preventDefault());
-document.addEventListener("keypress",e=>e.preventDefault());
-document.addEventListener("contextmenu",e=>e.preventDefault());
-
+// すべての操作をブロック
+document.addEventListener("click",block,true)
+document.addEventListener("contextmenu",block,true)
+document.addEventListener("keydown",block,true)
+document.addEventListener("keyup",block,true)
+document.addEventListener("wheel",block,{passive:false})
+document.addEventListener("touchstart",block,{passive:false})
 </script>
-
-</body>
-</html>
-```
