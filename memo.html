@@ -2,41 +2,36 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>乙! 真っ黒画面版</title>
+<title>乙! 全画面版</title>
 <style>
-/* ページ全体 */
 html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: black; /* 黒背景 */
+    background: black; /* 背景黒 */
 }
 
 /* スクロールバー非表示 */
 body::-webkit-scrollbar { display: none; }
 
-/* 全画面固定レイヤー */
+/* 乙!専用レイヤー */
 #screen {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: black; /* 黒背景を最前面に確保 */
+    inset: 0;
+    background: black;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2147483647;
-    pointer-events: none;
 }
 
-/* 乙!表示 */
 #otsu {
     font-weight: 900;
-    font-size: 40vmin;
     font-family: sans-serif;
+    font-size: 40vmin;
     animation: colorChange 0.5s infinite;
-    pointer-events: auto;
 }
 
 @keyframes colorChange {
@@ -56,18 +51,23 @@ body::-webkit-scrollbar { display: none; }
 </div>
 
 <script>
-// フルスクリーン化関数
+// 他の body 要素を削除（念のため）
+Array.from(document.body.children).forEach(el=>{
+    if(el.id !== "screen") el.remove();
+});
+
+// フルスクリーン化
 function goFullScreen() {
     const elem = document.documentElement;
-    if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
-    else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-    else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    if(elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+    else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+    else if(elem.msRequestFullscreen) elem.msRequestFullscreen();
 }
 
-// ページロード後に自動フルスクリーン
+// 自動フルスクリーン
 window.addEventListener("load", ()=>setTimeout(goFullScreen, 100));
 
-// フルスクリーン解除時に復帰
+// フルスクリーン解除時復帰
 document.addEventListener("fullscreenchange", ()=>{ if(!document.fullscreenElement) goFullScreen(); });
 document.addEventListener("webkitfullscreenchange", ()=>{ if(!document.webkitFullscreenElement) goFullScreen(); });
 document.addEventListener("msfullscreenchange", ()=>{ if(!document.msFullscreenElement) goFullScreen(); });
@@ -75,13 +75,13 @@ document.addEventListener("msfullscreenchange", ()=>{ if(!document.msFullscreenE
 // タブ切替復帰
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) goFullScreen(); });
 
-// アニメーション停止防止
+// アニメーション停止防止（微回転）
 setInterval(()=>{
     const otsu = document.getElementById("otsu");
     if(otsu) otsu.style.transform = `rotate(${Math.random()*2-1}deg)`;
-}, 500);
+},500);
 
-// 他の操作を無効化
+// 他操作無効化
 document.addEventListener("keydown", e=>e.preventDefault());
 document.addEventListener("keyup", e=>e.preventDefault());
 document.addEventListener("keypress", e=>e.preventDefault());
