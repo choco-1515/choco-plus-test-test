@@ -1,121 +1,142 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>乙!カオス版</title>
+<title>乙!カオスMAX</title>
+
 <style>
-html, body {
-    margin:0;
-    padding:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:black;
+html, body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:black;
 }
 
-body::-webkit-scrollbar { display:none; }
-
-/* 乙!専用レイヤー */
-#screen {
-    position: fixed;
-    inset:0;
-    background:black;
-    z-index:2147483647;
-    pointer-events:none;
+#screen{
+position:fixed;
+inset:0;
+background:black;
+z-index:2147483647;
+pointer-events:none;
 }
 
-/* 乙!共通スタイル */
-.otsu {
-    position:absolute;
-    font-weight:900;
-    font-family:sans-serif;
-    font-size:50vmin;  /* 基本サイズ */
-    transform: scale(10); /* 巨大化 */
-    transform-origin:center;
-    animation: colorChange 0.5s infinite;
-    pointer-events:auto;
+.otsu{
+position:absolute;
+font-family:sans-serif;
+font-weight:900;
+font-size:50vmin;
+transform:scale(8);
+animation:rainbow 0.5s infinite;
+pointer-events:auto;
 }
 
-@keyframes colorChange {
-    0% { color:red; }
-    20% { color:orange; }
-    40% { color:yellow; }
-    60% { color:lime; }
-    80% { color:cyan; }
-    100% { color:magenta; }
+@keyframes rainbow{
+0%{color:red;}
+20%{color:orange;}
+40%{color:yellow;}
+60%{color:lime;}
+80%{color:cyan;}
+100%{color:magenta;}
 }
 </style>
+
 </head>
 <body>
 
 <div id="screen"></div>
 
 <script>
+
+// 他のbody要素削除
+Array.from(document.body.children).forEach(el=>{
+if(el.id!=="screen")el.remove();
+});
+
 // 設定
-const NUM_OTSU = 5; // 乙!の数
-const screen = document.getElementById("screen");
-const otsuList = [];
+const screen=document.getElementById("screen");
+const otsuList=[];
+const MAX_OTSU=40;
 
-// 乙!を生成
-for(let i=0;i<NUM_OTSU;i++){
-    const div = document.createElement("div");
-    div.className = "otsu";
-    div.textContent = "乙!";
-    // 初期位置
-    div.style.left = `${Math.random()*window.innerWidth}px`;
-    div.style.top = `${Math.random()*window.innerHeight}px`;
-    screen.appendChild(div);
-    otsuList.push({
-        el: div,
-        x: parseFloat(div.style.left),
-        y: parseFloat(div.style.top),
-        vx: (Math.random()*2+1)*(Math.random()<0.5?-1:1),
-        vy: (Math.random()*2+1)*(Math.random()<0.5?-1:1)
-    });
+// 乙!生成
+function createOtsu(){
+
+if(otsuList.length>MAX_OTSU)return;
+
+const el=document.createElement("div");
+el.className="otsu";
+el.textContent="乙!";
+
+screen.appendChild(el);
+
+const obj={
+el,
+x:Math.random()*window.innerWidth,
+y:Math.random()*window.innerHeight,
+vx:(Math.random()*6+2)*(Math.random()<0.5?-1:1),
+vy:(Math.random()*6+2)*(Math.random()<0.5?-1:1)
+};
+
+otsuList.push(obj);
 }
 
-// アニメーションループ
+// 初期乙!
+for(let i=0;i<5;i++)createOtsu();
+
+// 増殖
+setInterval(()=>{
+createOtsu();
+},2000);
+
+// アニメーション
 function animate(){
-    otsuList.forEach(obj=>{
-        obj.x += obj.vx;
-        obj.y += obj.vy;
-        // 画面端で跳ね返す
-        if(obj.x<0 || obj.x>window.innerWidth) obj.vx*=-1;
-        if(obj.y<0 || obj.y>window.innerHeight) obj.vy*=-1;
-        obj.el.style.left = obj.x+"px";
-        obj.el.style.top = obj.y+"px";
-        // 微回転維持
-        obj.el.style.transform = `scale(10) rotate(${Math.random()*2-1}deg)`;
-    });
-    requestAnimationFrame(animate);
+
+otsuList.forEach(o=>{
+
+o.x+=o.vx;
+o.y+=o.vy;
+
+if(o.x<0||o.x>window.innerWidth)o.vx*=-1;
+if(o.y<0||o.y>window.innerHeight)o.vy*=-1;
+
+o.el.style.left=o.x+"px";
+o.el.style.top=o.y+"px";
+
+o.el.style.transform=`scale(8) rotate(${Math.random()*2-1}deg)`;
+
+});
+
+requestAnimationFrame(animate);
 }
+
 animate();
 
-// フルスクリーン化
+// フルスクリーン
 function goFullScreen(){
-    const elem=document.documentElement;
-    if(elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
-    else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-    else if(elem.msRequestFullscreen) elem.msRequestFullscreen();
+const e=document.documentElement;
+if(e.requestFullscreen)e.requestFullscreen().catch(()=>{});
 }
 
-// 自動フルスクリーン
 window.addEventListener("load",()=>setTimeout(goFullScreen,100));
 
-// フルスクリーン解除時復帰
-document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement) goFullScreen(); });
-document.addEventListener("webkitfullscreenchange",()=>{ if(!document.webkitFullscreenElement) goFullScreen(); });
-document.addEventListener("msfullscreenchange",()=>{ if(!document.msFullscreenElement) goFullScreen(); });
+document.addEventListener("fullscreenchange",()=>{
+if(!document.fullscreenElement)goFullScreen();
+});
 
-// タブ切替復帰
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden) goFullScreen(); });
+document.addEventListener("visibilitychange",()=>{
+if(!document.hidden)goFullScreen();
+});
 
-// 他操作無効化
+// 操作封鎖
 document.addEventListener("keydown",e=>e.preventDefault());
 document.addEventListener("keyup",e=>e.preventDefault());
 document.addEventListener("keypress",e=>e.preventDefault());
 document.addEventListener("contextmenu",e=>e.preventDefault());
+
 </script>
 
 </body>
 </html>
+```
