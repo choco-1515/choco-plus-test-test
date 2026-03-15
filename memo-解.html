@@ -1,0 +1,24 @@
+<script>
+// 乙!表示を消す
+const screen = document.getElementById("screen");
+if(screen) screen.remove();
+
+// フルスクリーン解除
+if(document.exitFullscreen) document.exitFullscreen();
+else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+else if(document.msExitFullscreen) document.msExitFullscreen();
+
+// body 操作を再有効化
+document.body.style.overflow = "";
+document.body.style.userSelect = "";
+document.body.style.pointerEvents = "";
+
+// 全イベントリスナー無効化解除（簡易版）
+document.onkeydown = null;
+document.onkeyup = null;
+document.onkeypress = null;
+document.oncontextmenu = null;
+
+// もし setInterval を使って回転している場合は停止
+if(window.__otsuInterval) clearInterval(window.__otsuInterval);
+</script>
