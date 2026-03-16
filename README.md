@@ -1,3 +1,6 @@
+https://replit.com/@a0966a9/j-2#main.py ここでytdlpについてやってる　あと除外ボタンの不具合さ、apiを詳しくブロック...とか？
+
+ 
 原因
 InvidiousがYouTubeから取得するストリームURLには2種類あります：
 
