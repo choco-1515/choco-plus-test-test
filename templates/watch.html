@@ -149,6 +149,7 @@
     let ytdlpSelectedQuality = { mp4: null, video: null, audio: null, hls: null };
     let _ytdlpLogs = [];
     let _ytdlpUsedSource = null;
+    let _ytdlpExcludedSources = [];  // 累積除外済みソース一覧
 
     let _lastKnownTime = 0;  // プレイヤーが破棄される前に退避した再生位置
 
@@ -693,7 +694,10 @@
 
     // ---- 他のAPIで読み込む ----
     function reloadYtdlpWithDifferentApi() {
-        const excludeSource = _ytdlpUsedSource;
+        if (_ytdlpUsedSource && !_ytdlpExcludedSources.includes(_ytdlpUsedSource)) {
+            _ytdlpExcludedSources.push(_ytdlpUsedSource);
+        }
+        const excludeStr = _ytdlpExcludedSources.join(',');
         ytdlpStreams = null;
         ytdlpCachedUrl = null;
         _ytdlpUsedSource = null;
@@ -701,7 +705,7 @@
         document.getElementById('btn-ytdlp-reload-api').style.display = 'none';
         document.getElementById('btn-ytdlp-open-stream-url').style.display = 'none';
         document.getElementById('ytdlpQualityOptions').innerHTML = '';
-        loadYtdlpStream(excludeSource);
+        loadYtdlpStream(excludeStr || null);
     }
 
     // ---- ytdlp 画質フィルタ切り替え ----
@@ -1121,6 +1125,7 @@
             ytdlpStreams = null;
             ytdlpCachedUrl = null;
             _ytdlpUsedSource = null;
+            _ytdlpExcludedSources = [];
             _ytdlpLogs.length = 0;
             currentEmbedUrl = null;
             document.getElementById('ytdlpQualityOptions').innerHTML = '';
